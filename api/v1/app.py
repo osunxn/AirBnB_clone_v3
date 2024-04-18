@@ -1,35 +1,45 @@
 #!/usr/bin/python3
 """
+app
 """
+
 from flask import Flask, jsonify
+from flask_cors import CORS
+from os import getenv
+
 from api.v1.views import app_views
 from models import storage
-from flask_cors import CORS
 
 
 app = Flask(__name__)
-app.register_blueprint(app_views)
-app.config['JSONIFY_PRETTYPRINT_REGULAR'] = True
+
 CORS(app, resources={r"/*": {"origins": "0.0.0.0"}})
+
+app.register_blueprint(app_views)
 
 
 @app.teardown_appcontext
-def teardown(x):
-    """handle @app.teardown_appcontext that calls storage.close()"""
+def teardown(exception):
+    """
+    teardown function
+    """
     storage.close()
 
 
 @app.errorhandler(404)
-def not_found(x):
+def handle_404(exception):
     """
-    a handler for 404 errors that returns a JSON-formatted
-    404 status code response"""
-    return jsonify({'error': 'Not found'}), 404
+    handles 404 error
+    :return: returns 404 json
+    """
+    data = {
+        "error": "Not found"
+    }
 
+    resp = jsonify(data)
+    resp.status_code = 404
 
-if __name__ == '__main__':
-    from os import getenv
-    app.run(
-            host=getenv('HBNB_API_HOST', '0.0.0.0'),
-            port=getenv('HBNB_API_PORT', 5000),
-            threaded=True)
+    return(resp)
+
+if __name__ == "__main__":
+    app.run(getenv("HBNB_API_HOST"), getenv("HBNB_API_PORT"))
